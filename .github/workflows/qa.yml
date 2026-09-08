@@ -1,0 +1,31 @@
+name: QA
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  qa:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Check references/ isn't stale
+        run: |
+          if ! git diff --exit-code references/; then
+            echo "::error::references/ doesn't match the scroll-flyover version pinned in package.json. Run 'npm run sync', commit the result, and push again."
+            exit 1
+          fi
+
+      - run: npx playwright install --with-deps chromium
+
+      - run: npm run qa

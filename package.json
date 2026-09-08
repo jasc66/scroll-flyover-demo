@@ -1,0 +1,19 @@
+{
+  "name": "scroll-flyover-demo",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Live gallery of scroll-flyover example builds — engine sourced from the published scroll-flyover npm package, not vendored.",
+  "scripts": {
+    "sync": "node scripts/sync-engine.mjs",
+    "postinstall": "node scripts/sync-engine.mjs",
+    "serve": "node scripts/serve.mjs",
+    "qa": "node scripts/run-qa.mjs"
+  },
+  "dependencies": {
+    "scroll-flyover": "1.0.0"
+  },
+  "devDependencies": {
+    "playwright": "1.63.0",
+    "pngjs": "7.0.0"
+  }
+}
