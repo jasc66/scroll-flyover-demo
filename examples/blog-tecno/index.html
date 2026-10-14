@@ -140,7 +140,13 @@
     const layoutCorridor = (count) =>
       Array.from({ length: count }, (_, i) => new THREE.Vector3(i * 26, 0, Math.sin(i * 0.5) * 8));
 
+    // Loader: down once there is something on screen — the first frame, or the static
+    // fallback without WebGL (scroll-flyover 1.11.0). The production site, on 1.4.0,
+    // watches for the <canvas> instead and keeps a four-second timeout for the fallback.
+    const loader = document.querySelector('.loader');
+
     const handle = mountScrollFlyover(document.getElementById('world'), {
+      onReady: () => loader.classList.add('done'),
       palette: { colors: ['#0a0a0a', '#111827', '#1f2937', '#4ade80', '#16a34a'], accent: '#16a34a' },
       shapeLanguage: 'geometric',
       cameraFeel: 'glide',
@@ -166,20 +172,6 @@
     // For scripts/capture.mjs: the frame grabber needs the handle to call renderAt().
     window.__flyover = handle;
 
-    // Loader: the engine has no "first frame" callback, so the signal is its <canvas>
-    // appearing, plus two frames for it to paint. The timeout covers the no-WebGL
-    // fallback, which never creates a canvas.
-    const world = document.getElementById('world');
-    const loader = document.querySelector('.loader');
-    const reveal = () => requestAnimationFrame(() => requestAnimationFrame(() => loader.classList.add('done')));
-    if (world.querySelector('canvas')) reveal();
-    else {
-      const observer = new MutationObserver(() => {
-        if (world.querySelector('canvas')) { observer.disconnect(); reveal(); }
-      });
-      observer.observe(world, { childList: true, subtree: true });
-    }
-    setTimeout(() => loader.classList.add('done'), 4000);
 
     // The banner fades with the first 420px of scroll, before the engine's own panel for
     // scene 1 appears, so the two never overlap. Read in rAF: scroll fires faster than

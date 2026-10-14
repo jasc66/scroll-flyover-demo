@@ -54,7 +54,7 @@ is an instant swap.
 
 ## Engine source
 
-Currently pinned: **scroll-flyover 1.10.0**.
+Currently pinned: **scroll-flyover 1.11.0**.
 
 `references/` here is **not** hand-maintained — it's copied from the published
 [`scroll-flyover`](https://www.npmjs.com/package/scroll-flyover) npm package (pinned in
