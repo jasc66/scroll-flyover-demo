@@ -18,6 +18,7 @@
   <script type="module">
     import * as THREE from 'three';
     import { mountScrollFlyover } from '../../references/scrub-engine.js';
+    import { createEffects } from '../../references/scrub-effects.js';
     import { buildIslandBase, buildBlock, buildTower, addRimGlow, layoutDescent } from '../_shared/recipes.js';
 
     // Subject: Nexo Ops, a project-management SaaS. Deliberate uniqueness: instead
@@ -119,6 +120,8 @@
       shapeLanguage: 'geometric',
       cameraFeel: 'glide', // required for vertical descent — banking reads as tumbling
       performance: 'rich',
+      // Sharp at each scene, softening between them (scroll-flyover 1.10.0).
+      effects: createEffects({ depthOfField: true }),
       seed: 20260907,
       layout: layoutDescent(22, 6),
       scenes: [

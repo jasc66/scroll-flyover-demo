@@ -18,6 +18,7 @@
   <script type="module">
     import * as THREE from 'three';
     import { mountScrollFlyover } from '../../references/scrub-engine.js';
+    import { createEffects } from '../../references/scrub-effects.js';
     import {
       buildBlock, buildTower, addGridOverlay, layoutCorridor,
     } from '../_shared/recipes.js';
@@ -123,6 +124,8 @@
       shapeLanguage: 'geometric',
       cameraFeel: 'glide', // required for corridor — banking reads as tumbling here
       performance: 'rich',
+      // Sharp at each scene, softening between them (scroll-flyover 1.10.0).
+      effects: createEffects({ depthOfField: true }),
       seed: 41900,
       layout: layoutCorridor(SPACING, CURVE),
       scenes: [

@@ -131,6 +131,19 @@ composer.addPass(bloom);
 // then render with composer.render() instead of renderer.render(scene, camera)
 ```
 
+With the engine (1.9.0+), that last line is `config.effects` — the engine calls it in
+place of its own `renderer.render()`, and calls `dispose()` on unmount:
+
+```js
+effects: {
+  render: () => composer.render(),
+  dispose: () => composer.dispose(),
+},
+```
+
+Size the composer from the renderer (`composer.setSize`) on resize; the hook does not
+forward resizes.
+
 Pair it with **one emissive prop** in the peak scene:
 
 ```js
@@ -144,6 +157,27 @@ new THREE.MeshStandardMaterial({
 **Cost warning:** bloom is a full-screen pass — roughly 1.3–1.6× frame cost. Gate it to
 the "Rich" tier and disable on mobile (`SKILL.md` Step 7). A build that looks
 cinematic at 20fps is worse than one that looks clean at 60.
+
+### Grain, motion blur and depth of field (`scroll-flyover/effects`, 1.9.0+)
+
+`createEffects({ grain: true, motionBlur: true })` from `references/scrub-effects.js`
+adds both without addons. They work on the finished frame, so the scene — fog, tone
+mapping and all — looks exactly as it does without them:
+
+- **Grain** is static: a fixed per-pixel pattern, never animated, because moving grain
+  is idle motion that `prefers-reduced-motion` could not switch off without changing
+  the look. Its job is texture on flat low-poly faces and big sky gradients.
+- **Motion blur** follows the camera's velocity along the path and is zero at rest, so
+  every landing is sharp and `renderAt()` captures stay sharp too. Rich tier only, off
+  under `prefers-reduced-motion`. It costs a depth-only pass plus a full-screen gather
+  while the camera moves — on SwiftShader, roughly double the frame time in motion,
+  nothing at rest.
+- **Depth of field** (`depthOfField: true`, 1.10.0+) follows the camera's place on the
+  path: sharp through each scene's dwell, softening toward the middle of a transit,
+  focused on the scene ahead. It tells the eye where to read — the landings — and
+  costs nothing there. Rich tier only. About 10ms a frame between scenes on an Apple
+  M2 at a 2× pixel ratio, comparable to the motion blur; keep `maxPixels` modest (the
+  default 10 is a hint, not a smear) so the transit stays a journey, not a blur.
 
 ## §5 — Shadows and contact
 
@@ -186,6 +220,9 @@ are two or more unchecked:
 | Procedural env map | on, 256px PMREM | on, 128px — still worth it |
 | Bevels / extrudes | everywhere | hero props only |
 | Bloom | on (strength ≤ 0.5) | **off** |
+| Grain (effects) | optional | optional — no extra buffers |
+| Motion blur (effects) | optional, in motion only | **off** (automatic) |
+| Depth of field (effects) | optional, between scenes only | **off** (automatic) |
 | Shadows | 2048 map, PCFSoft | 1024 map, or off |
 | Emissive props | 1–2 | 1 |
 

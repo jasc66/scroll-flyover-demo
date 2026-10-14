@@ -18,6 +18,7 @@
   <script type="module">
     import * as THREE from 'three';
     import { mountScrollFlyover } from '../../references/scrub-engine.js';
+    import { createEffects } from '../../references/scrub-effects.js';
     import { buildBlob, addRimGlow, layoutOrbit } from '../_shared/recipes.js';
 
     // Subject: Ala Sneaker, a single-product launch — orbit showcase is the direct
@@ -92,6 +93,8 @@
       shapeLanguage: 'toy',
       cameraFeel: 'swoop',
       performance: 'rich',
+      // Sharp at each scene, softening between them (scroll-flyover 1.10.0).
+      effects: createEffects({ depthOfField: true }),
       seed: 8801,
       layout: () => orbitAnchors,
       scenes: [

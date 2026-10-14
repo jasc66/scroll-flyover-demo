@@ -18,6 +18,7 @@
   <script type="module">
     import * as THREE from 'three';
     import { mountScrollFlyover } from '../../references/scrub-engine.js';
+    import { createEffects } from '../../references/scrub-effects.js';
     import {
       buildIslandBase, buildRock, buildTree, scatterInstances,
       buildWaterPlane, addRimGlow, layoutIslandHop,
@@ -131,6 +132,8 @@
       shapeLanguage: 'lowpoly',
       cameraFeel: 'swoop',
       performance: 'rich',
+      // Sharp at each scene, softening between them (scroll-flyover 1.10.0).
+      effects: createEffects({ depthOfField: true }),
       seed: 71100,
       layout: layoutIslandHop(24, 4),
       scenes: [

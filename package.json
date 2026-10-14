@@ -10,7 +10,7 @@
     "qa": "node scripts/run-qa.mjs"
   },
   "dependencies": {
-    "scroll-flyover": "1.0.0"
+    "scroll-flyover": "1.10.0"
   },
   "devDependencies": {
     "playwright": "1.63.0",
