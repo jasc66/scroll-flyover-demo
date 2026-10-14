@@ -7,7 +7,8 @@
     "sync": "node scripts/sync-engine.mjs",
     "postinstall": "node scripts/sync-engine.mjs",
     "serve": "node scripts/serve.mjs",
-    "qa": "node scripts/run-qa.mjs"
+    "qa": "node scripts/run-qa.mjs",
+    "capture": "node scripts/capture.mjs"
   },
   "dependencies": {
     "scroll-flyover": "1.10.0"

@@ -11,7 +11,7 @@
  * locally via `npm run qa`.
  */
 import { spawn, spawnSync } from 'node:child_process';
-import { readdir, access } from 'node:fs/promises';
+import { readdir, access, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -48,8 +48,19 @@ function waitForServer(url, timeoutMs = 15000) {
   });
 }
 
-function runScript(scriptName, url) {
-  const result = spawnSync(process.execPath, [path.join(root, scriptName), url], {
+// An example whose scenes animate at rest (userData.tick) says so in qa.json:
+// { "animated": true }. Its frame never stops changing, so the engine's reload check,
+// which waits for a still screen, cannot settle on it.
+async function readQaOptions(name) {
+  try {
+    return JSON.parse(await readFile(path.join(root, 'examples', name, 'qa.json'), 'utf8'));
+  } catch {
+    return {};
+  }
+}
+
+function runScript(scriptName, url, ...extra) {
+  const result = spawnSync(process.execPath, [path.join(root, scriptName), url, ...extra], {
     stdio: 'inherit',
   });
   return result.status === 0;
@@ -71,11 +82,20 @@ async function main() {
       const url = `${baseUrl}/examples/${name}/index.html`;
       console.log(`\n=== ${name} ===`);
 
-      console.log(`-- reproducibility (${url}) --`);
-      if (!runScript(path.join('references', 'qa-reproducibility.mjs'), url)) failed = true;
+      const { animated } = await readQaOptions(name);
+
+      if (animated) {
+        // Same question, asked with time held still: renderAt() frames across reloads.
+        console.log(`-- reproducibility, animated: renderAt() across reloads (${url}) --`);
+        if (!runScript(path.join('scripts', 'qa-render-at.mjs'), url)) failed = true;
+      } else {
+        console.log(`-- reproducibility (${url}) --`);
+        if (!runScript(path.join('references', 'qa-reproducibility.mjs'), url)) failed = true;
+      }
 
       console.log(`-- accessibility / color-contrast (${url}) --`);
-      if (!runScript(path.join('scripts', 'qa-accessibility.mjs'), url)) failed = true;
+      const a11yArgs = animated ? ['--reduced-motion'] : [];
+      if (!runScript(path.join('scripts', 'qa-accessibility.mjs'), url, ...a11yArgs)) failed = true;
     }
   } finally {
     server.kill();

@@ -60,9 +60,12 @@ import { PNG } from 'pngjs';
 
 const url = process.argv[2];
 if (!url) {
-  console.error('Usage: node qa-accessibility.mjs <url>');
+  console.error('Usage: node qa-accessibility.mjs <url> [--reduced-motion]');
   process.exit(1);
 }
+// For a page whose scenes animate (userData.tick): the frame never stops changing, so it
+// is scored the way the engine holds it still, under prefers-reduced-motion.
+const reducedMotion = process.argv.includes('--reduced-motion');
 
 function relativeLuminance({ r, g, b }) {
   const channel = (c) => {
@@ -119,7 +122,10 @@ async function main() {
   const browser = await chromium.launch({
     args: ['--enable-unsafe-swiftshader', '--use-gl=swiftshader'],
   });
-  const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+  const page = await browser.newPage({
+    viewport: { width: 1440, height: 900 },
+    ...(reducedMotion ? { reducedMotion: 'reduce' } : {}),
+  });
 
   await page.goto(url, { waitUntil: 'networkidle', timeout: 60000 });
 

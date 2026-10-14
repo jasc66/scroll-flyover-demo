@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>TechInsight — scroll-flyover example (real project / corridor)</title>
+  <style>
+    /* The host-page rules the production site needed (BlogTecno, app/globals.css):
+       `overflow-x: clip`, not `hidden`, which would break the engine's sticky canvas,
+       and no smooth scrolling, which fights the scrub. */
+    html { scroll-behavior: auto; }
+    html, body { margin: 0; padding: 0; background: #0a0a0a; overflow-x: clip; }
+    body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+    #world {
+      width: 100%;
+      /* The engine's tokens pointed at the blog's identity, as on the live site. */
+      --sf-overlay-bg: rgba(10,10,10,0.72);
+      --sf-overlay-blur: 10px;
+      --sf-overlay-radius: 16px;
+      --sf-overlay-padding: 1.4em 1.6em;
+      --sf-cta-bg: #15803d;
+      --sf-cta-text-color: #ffffff;
+      --sf-cta-radius: 8px;
+      --sf-tag-border: rgba(74,222,128,0.55);
+      --sf-rail-dot: rgba(255,255,255,0.3);
+      --sf-rail-dot-active: #4ade80;
+      --sf-title-size: clamp(1.6rem, 5.4vw, 2.6rem);
+      --sf-panel-max-width: 520px;
+    }
+
+    /* Brand banner. Outside the engine's container on purpose: the engine rewrites the
+       DOM inside its host and dispose() empties it. Decorative for assistive tech: the
+       real heading and copy are in the engine's own linear content block. */
+    .banner {
+      position: fixed; inset: 0; z-index: 30;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 0 24px; text-align: center; color: #fff; pointer-events: none;
+    }
+    .kicker {
+      display: inline-flex; align-items: center; gap: 8px; margin-bottom: 20px;
+      padding: 6px 16px; border: 1px solid rgba(74,222,128,.4); border-radius: 999px;
+      background: rgba(10,10,10,.6); backdrop-filter: blur(12px);
+      color: #4ade80; font-size: .75rem; font-weight: 500; letter-spacing: .18em; text-transform: uppercase;
+    }
+    .kicker::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: #4ade80; }
+    .brand {
+      margin: 0; font-size: clamp(2.6rem, 9vw, 5.5rem); font-weight: 700; line-height: .95;
+      letter-spacing: -.02em; text-shadow: 0 2px 24px rgba(0,0,0,.85);
+    }
+    .brand span { color: #4ade80; }
+    /* Clear of the engine's scene rail, which sits at the right edge. */
+    @media (max-width: 600px) {
+      .banner { padding: 0 52px; }
+      .kicker { padding: 6px 12px; font-size: .65rem; letter-spacing: .1em; }
+    }
+    .tagline {
+      max-width: 36rem; margin: 20px 0 0; font-size: clamp(1rem, 2.4vw, 1.25rem); line-height: 1.6;
+      color: rgba(255,255,255,.9); text-shadow: 0 2px 16px rgba(0,0,0,.95);
+    }
+    .actions {
+      position: fixed; z-index: 31; left: 0; right: 0; bottom: max(22vh, 120px);
+      display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; padding: 0 24px;
+    }
+    .actions[hidden] { display: none; }
+    .actions a {
+      display: inline-flex; align-items: center; min-height: 44px; padding: 0 28px; border-radius: 8px;
+      font-size: .875rem; font-weight: 600; color: #fff; text-decoration: none;
+    }
+    .actions .primary { background: #15803d; }
+    .actions .primary:hover { background: #166534; }
+    .actions .secondary { border: 1px solid rgba(255,255,255,.4); background: rgba(0,0,0,.4); backdrop-filter: blur(12px); }
+    .actions .secondary:hover { background: rgba(0,0,0,.6); }
+    .actions a:focus-visible { outline: 3px solid #4ade80; outline-offset: 3px; }
+    .hint {
+      position: absolute; bottom: max(12vh, 64px); font-size: .7rem; letter-spacing: .2em; text-transform: uppercase;
+      color: rgba(255,255,255,.85); text-shadow: 0 1px 10px rgba(0,0,0,.95);
+    }
+
+    /* Loader over the first frames: compiling shaders takes a moment, and a black flash
+       reads as a broken page. */
+    .loader {
+      position: fixed; inset: 0; z-index: 40; display: flex; align-items: center; justify-content: center;
+      background: #0a0a0a; color: rgba(255,255,255,.85); font-size: .875rem; transition: opacity .7s;
+    }
+    .loader.done { opacity: 0; pointer-events: none; }
+
+    @media (prefers-reduced-motion: no-preference) {
+      @view-transition { navigation: auto; }
+      ::view-transition-group(*) { animation-duration: .56s; animation-timing-function: cubic-bezier(.22,.9,.24,1); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .loader { transition: none; }
+      #world .sf-section { transition-duration: .15s; }
+    }
+    .vt-arrival { position: fixed; inset: 0; pointer-events: none; view-transition-name: demo-blog-tecno; }
+  </style>
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.169.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.169.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+<body>
+  <div class="vt-arrival" aria-hidden="true"></div>
+  <div class="loader" aria-hidden="true">Construyendo el corredor…</div>
+
+  <div class="banner" aria-hidden="true">
+    <span class="kicker">Blog de tecnología y ciencia</span>
+    <p class="brand">Tech<span>Insight</span></p>
+    <p class="tagline">Noticias, análisis y debates sobre las tecnologías que están transformando nuestro mundo.</p>
+    <span class="hint">Desplázate para recorrerlo</span>
+  </div>
+  <!-- Outside the aria-hidden banner: links inside it would be focusable but hidden from
+       screen readers (the live site has that problem). Fades out with the banner. -->
+  <nav class="actions" aria-label="TechInsight">
+    <a class="primary" href="https://blog-tecno.vercel.app/noticias">Explorar noticias</a>
+    <a class="secondary" href="https://blog-tecno.vercel.app/">Ver el sitio real</a>
+  </nav>
+
+  <div id="world"></div>
+
+  <script type="module">
+    import * as THREE from 'three';
+    import { mountScrollFlyover } from '../../references/scrub-engine.js';
+    import { createEffects } from '../../references/scrub-effects.js';
+    import { buildSignal, buildNoticias, buildInvestigacion, buildNucleo, buildComunidad } from './scenes.js';
+
+    // Subject: TechInsight, a tech and science news blog in production at
+    // https://blog-tecno.vercel.app/ — the one example in this gallery that is a real
+    // site, not a showcase. There it is a React component in a Next.js 14 app; this is
+    // the same configuration as a static page. Palette, seed, layout, copy and --sf-*
+    // tokens are the production ones; the CTA at the end goes to the real forum.
+    const SITE = 'https://blog-tecno.vercel.app';
+
+    // Corridor archetype (camera-archetypes.md §4): forward flight, gentle curve in Z so
+    // the tunnel does not read as a straight tube. 'glide' is required in a corridor.
+    const layoutCorridor = (count) =>
+      Array.from({ length: count }, (_, i) => new THREE.Vector3(i * 26, 0, Math.sin(i * 0.5) * 8));
+
+    const handle = mountScrollFlyover(document.getElementById('world'), {
+      palette: { colors: ['#0a0a0a', '#111827', '#1f2937', '#4ade80', '#16a34a'], accent: '#16a34a' },
+      shapeLanguage: 'geometric',
+      cameraFeel: 'glide',
+      performance: 'rich',
+      // Not on the live site yet (it pins ^1.4.0); here it shows what 1.10.0 adds to it.
+      effects: createEffects({ depthOfField: true }),
+      seed: 20260909,
+      layout: layoutCorridor,
+      labels: {
+        goToScene: (index, total) => `Ir a la escena ${index} de ${total}`,
+      },
+      scenes: [
+        { build: buildSignal, eyebrow: 'El recorrido', title: 'Entra al corredor de datos', body: 'Cinco paradas por el ecosistema que cubrimos: la actualidad, las investigaciones a fondo, el boletín semanal y la comunidad que discute todo lo demás.', tags: ['Tecnología', 'Ciencia'] },
+        { build: buildNoticias, eyebrow: 'Noticias', title: 'Lo último, sin ruido', body: 'Cobertura diaria de lo que de verdad mueve la industria: IA, chips, energía y el software que sostiene todo lo demás.', tags: ['Actualidad', 'Análisis'] },
+        { build: buildInvestigacion, eyebrow: 'Investigaciones', title: 'Más allá del titular', body: 'Reportajes largos y datos verificados sobre computación cuántica, exploración espacial y los límites de la ciencia aplicada.', tags: ['Profundidad', 'Datos'] },
+        { build: buildNucleo, eyebrow: 'Boletines', title: 'El núcleo, cada semana', body: 'Un resumen editorial directo a tu correo: lo esencial de la semana, destilado y sin relleno.', tags: ['Semanal', 'Suscripción'] },
+        // The live site wires this CTA by matching the button's text, because it was built
+        // on 1.4.0; `ctaHref` (since 1.6.0) makes it a real link instead.
+        { build: buildComunidad, eyebrow: 'Foro', title: 'La conversación sigue aquí', body: 'Únete a debates con lectores, investigadores y desarrolladores que construyen lo que cubrimos.', tags: ['Comunidad'], cta: 'Unirse al foro', ctaHref: `${SITE}/foro` },
+      ],
+    });
+
+    // For scripts/capture.mjs: the frame grabber needs the handle to call renderAt().
+    window.__flyover = handle;
+
+    // Loader: the engine has no "first frame" callback, so the signal is its <canvas>
+    // appearing, plus two frames for it to paint. The timeout covers the no-WebGL
+    // fallback, which never creates a canvas.
+    const world = document.getElementById('world');
+    const loader = document.querySelector('.loader');
+    const reveal = () => requestAnimationFrame(() => requestAnimationFrame(() => loader.classList.add('done')));
+    if (world.querySelector('canvas')) reveal();
+    else {
+      const observer = new MutationObserver(() => {
+        if (world.querySelector('canvas')) { observer.disconnect(); reveal(); }
+      });
+      observer.observe(world, { childList: true, subtree: true });
+    }
+    setTimeout(() => loader.classList.add('done'), 4000);
+
+    // The banner fades with the first 420px of scroll, before the engine's own panel for
+    // scene 1 appears, so the two never overlap. Read in rAF: scroll fires faster than
+    // the screen refreshes.
+    const banner = document.querySelector('.banner');
+    const actions = document.querySelector('.actions');
+    const FADE_PX = 420;
+    let raf = 0;
+    const onScroll = () => {
+      if (raf) return;
+      raf = requestAnimationFrame(() => {
+        raf = 0;
+        const o = Math.max(0, 1 - window.scrollY / FADE_PX);
+        banner.style.opacity = o;
+        banner.style.visibility = o <= 0.01 ? 'hidden' : 'visible';
+        actions.style.opacity = o;
+        // Hidden once faded, so keyboard focus never lands on an invisible link.
+        actions.hidden = o <= 0.01;
+      });
+    };
+    addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+  </script>
+</body>
+</html>

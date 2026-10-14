@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>scroll-flyover — galería de demos</title>
-  <meta name="description" content="Cuatro demos en vivo de scroll-flyover: recorridos 3D guiados por el scroll, con Three.js procedural y sin generación de imagen o video con IA." />
+  <meta name="description" content="Demos en vivo de scroll-flyover, una de ellas de un sitio en producción: recorridos 3D guiados por el scroll, con Three.js procedural y sin generación de imagen o video con IA." />
   <meta name="theme-color" content="#0a0c10" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -213,12 +213,14 @@
     .c-arq .shot    { view-transition-name: demo-architecture-studio; }
     .c-saas .shot   { view-transition-name: demo-saas-nexo-ops; }
     .c-shoe .shot   { view-transition-name: demo-product-ala-sneaker; }
+    .c-tech .shot   { view-transition-name: demo-blog-tecno; }
 
     /* accent per demo: taken from each demo's own palette */
     .c-coffee { --accent: #9fcf7a; }   /* 10.2:1 on card */
     .c-arq    { --accent: #f09a43; }   /*  8.2:1 on card */
     .c-saas   { --accent: #7fd6e8; }   /* 10.2:1 on card */
     .c-shoe   { --accent: #ff7aa8; }   /*  7.5:1 on card */
+    .c-tech   { --accent: #4ade80; }   /* 10.5:1 on card */
 
     /* ---------- Release ---------- */
     .release { padding: 56px 0 24px; }
@@ -342,6 +344,17 @@
                 <span class="tag">Producto · Órbita</span>
                 <h3>Ala Sneaker</h3>
                 <span class="desc">Una órbita alrededor de la silueta de una zapatilla: formas de juguete, cámara en picada y edición limitada.</span>
+                <span class="go">Abrir demo <b aria-hidden="true">→</b></span>
+              </span>
+            </a>
+          </li>
+          <li>
+            <a class="card c-tech" href="examples/blog-tecno/">
+              <span class="shot"><img class="first" src="examples/blog-tecno/preview.png" width="1440" height="900" loading="lazy" alt="Un túnel oscuro con luz verde al fondo y el título «TechInsight», blog de tecnología y ciencia." /><img class="later" src="examples/blog-tecno/preview-2.png" width="1440" height="900" loading="lazy" alt="" /></span>
+              <span class="card-body">
+                <span class="tag">Proyecto real · Corredor</span>
+                <h3>TechInsight</h3>
+                <span class="desc">El hero de un blog en producción, con la misma configuración que el sitio real: un corredor de datos que termina en el foro.</span>
                 <span class="go">Abrir demo <b aria-hidden="true">→</b></span>
               </span>
             </a>
